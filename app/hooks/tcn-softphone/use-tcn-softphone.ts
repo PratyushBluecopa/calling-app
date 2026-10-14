@@ -534,8 +534,10 @@ export function useTcnSoftphone(options: { enabled: boolean }) {
         const tokenData = await exchangeCodeMutation.mutateAsync({ code });
         accessTokenRef.current = tokenData.access_token;
         refreshTokenRef.current = tokenData.refresh_token;
-        persistTokens(tokenData.access_token, tokenData.refresh_token);
         await runAgentBootstrap();
+        // Persist only after the full bootstrap succeeds, so a failed
+        // login never leaves a token behind in storage.
+        persistTokens(tokenData.access_token, tokenData.refresh_token);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Connection failed";
         // A failed bootstrap with a stored token usually means the
@@ -564,11 +566,14 @@ export function useTcnSoftphone(options: { enabled: boolean }) {
       if (event.data?.tcnAuthCode) {
         popupRef.current?.close();
         runLoginFlow(event.data.tcnAuthCode);
+      } else if (event.data?.tcnAuthError) {
+        popupRef.current?.close();
+        setPhase("error", { error: String(event.data.tcnAuthError) });
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [runLoginFlow]);
+  }, [runLoginFlow, setPhase]);
 
   // ─── Public Actions ───────────────────────────────────────────────────────
 
@@ -627,6 +632,18 @@ export function useTcnSoftphone(options: { enabled: boolean }) {
       if (!popupRef.current) {
         throw new Error("The TCN login popup was blocked. Allow popups for this site and try again.");
       }
+      // If the user closes the popup (e.g. after a failed login) without a
+      // code ever arriving, leave "authenticating" instead of spinning forever.
+      const popup = popupRef.current;
+      const closedPoll = setInterval(() => {
+        if (!popup.closed) return;
+        clearInterval(closedPoll);
+        setState((prev) =>
+          prev.phase === "authenticating"
+            ? { ...prev, phase: "error", error: "TCN login was not completed. Please try again." }
+            : prev,
+        );
+      }, 500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[Softphone] Login error:", err);

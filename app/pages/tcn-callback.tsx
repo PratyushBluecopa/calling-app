@@ -9,11 +9,17 @@ export default function TcnCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
+    if (!window.opener) return;
 
-    if (code && window.opener) {
+    if (code) {
       window.opener.postMessage({ tcnAuthCode: code }, window.location.origin);
-      window.close();
+    } else {
+      // OAuth error redirect (wrong credentials, denied consent, …)
+      const error =
+        params.get("error_description") || params.get("error") || "TCN login failed";
+      window.opener.postMessage({ tcnAuthError: error }, window.location.origin);
     }
+    window.close();
   }, []);
 
   return (
