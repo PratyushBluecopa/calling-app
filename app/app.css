@@ -1,0 +1,340 @@
+/*
+ * MFE CSS Strategy:
+ * - NO global preflight — we skip Tailwind's base reset to avoid leaking into the host app
+ * - Scoped reset under .mfe-root — only affects the MFE subtree
+ * - copa: prefix on all utilities — prevents class name collisions
+ * - Custom utilities scoped under .mfe-root — prevents naming collisions
+ */
+
+/* Import Tailwind WITHOUT preflight — preflight resets *, html, body globally which leaks into the host */
+/* @import "tailwindcss/preflight" — INTENTIONALLY SKIPPED (global resets leak into host app) */
+@import "tailwindcss/theme" prefix(copa);
+@import "tailwindcss/utilities" prefix(copa);
+@import "tw-animate-css";
+
+/* ===== BUILD-TIME THEME (resolved at compile) ===== */
+@theme {
+  /* Breakpoints (required — Tailwind v4 prefix does not auto-include defaults) */
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 96rem;
+
+  /* Font family */
+  --font-sans: "Satoshi", sans-serif;
+  --font-mono: "Satoshi", sans-serif;
+
+  /* Fluid type scale (from Dream Light _typography.css — exact values) */
+  --text-xs: 0.702rem;
+  --text-xs--line-height: 1.053rem;
+  --text-sm: 0.835rem;
+  --text-sm--line-height: 1.258rem;
+  --text-md: 1.004rem;
+  --text-md--line-height: 1.513rem;
+  --text-lg: 1.21rem;
+  --text-lg--line-height: 1.815rem;
+  --text-xl: 1.452rem;
+  --text-xl--line-height: 2.190rem;
+  --text-2xl: 1.742rem;
+  --text-2xl--line-height: 2.626rem;
+  --text-3xl: 2.093rem;
+  --text-3xl--line-height: 3.146rem;
+  --text-4xl: 2.505rem;
+  --text-4xl--line-height: 3.763rem;
+  --text-5xl: 3.013rem;
+  --text-5xl--line-height: 4.513rem;
+
+  /* Heading scale */
+  --text-h1: 3rem;
+  --text-h1--line-height: 4.5rem;
+  --text-h2: 2.25rem;
+  --text-h2--line-height: 3.375rem;
+  --text-h3: 1.875rem;
+  --text-h3--line-height: 2.8125rem;
+  --text-h4: 1.5rem;
+  --text-h4--line-height: 2.25rem;
+  --text-h5: 1.25rem;
+  --text-h5--line-height: 1.875rem;
+  --text-h6: 1rem;
+  --text-h6--line-height: 1.5rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.2rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 0.95rem;
+
+  /* Radius (from Dream Light _spacing.css) */
+  --card-radius: 1.25rem;
+  --rounded-input: 12px;
+}
+
+/* ===== RUNTIME THEME (CSS vars bound at runtime) ===== */
+@theme inline {
+  /* Radius (computed from --radius in .mfe-root) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ===== MFE-SCOPED VARIABLES (light theme-modern from Dream Light _colors.css) ===== */
+.mfe-root {
+  /* Radius (Dream Light _spacing.css) */
+  --radius: 1rem;
+
+  /* Colors (exact values from Dream Light _colors.css) */
+  --background: oklch(0.975 0.005 280);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(0.995 0.003 280 / 0.85);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(0.995 0.003 280);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #3548ff;
+  --primary-foreground: oklch(100% 0 0);
+  --primary-lighter: #ebf4ff;
+  --secondary: oklch(0.97 0.003 280);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0.003 280);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0.003 280);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.005 280);
+  --input: oklch(0.92 0.005 280);
+  --ring: oklch(0.25 0.08 9);
+
+  /* Sidebar (Dream Light — white panel, subtle border) */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.96 0.003 280);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.92 0.004 280);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Semantic status colors */
+  --status-success: oklch(0.72 0.19 142);
+  --status-success-bg: oklch(0.95 0.05 142);
+  --status-success-border: oklch(0.80 0.12 142);
+  --status-warning: oklch(0.80 0.18 85);
+  --status-warning-bg: oklch(0.96 0.06 85);
+  --status-warning-border: oklch(0.85 0.12 85);
+  --status-error: oklch(0.63 0.24 25);
+  --status-error-bg: oklch(0.95 0.04 25);
+  --status-error-border: oklch(0.75 0.15 25);
+  --status-info: oklch(0.62 0.19 250);
+  --status-info-bg: oklch(0.95 0.04 250);
+  --status-info-border: oklch(0.75 0.12 250);
+
+  /* Spacing (theme-modern preset) */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Chart colors (Dream Light palette) */
+  --chart-1: oklch(0.55 0.15 255);
+  --chart-2: oklch(0.62 0.12 175);
+  --chart-3: oklch(0.70 0.13 80);
+  --chart-4: oklch(0.55 0.14 295);
+  --chart-5: oklch(0.62 0.12 15);
+
+  /* Motion tokens */
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== SCOPED BASE RESET ===== */
+/* Tailwind preflight is scoped to .mfe-root so it only resets MFE elements, not the host app */
+@layer base {
+  .mfe-root {
+    @apply copa:bg-background copa:text-foreground;
+    font-family: var(--font-sans, "Satoshi", sans-serif);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .mfe-root *,
+  .mfe-root *::before,
+  .mfe-root *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    @apply copa:border-border copa:outline-ring/50;
+  }
+
+  .mfe-root button,
+  .mfe-root a,
+  .mfe-root [role="menuitem"],
+  .mfe-root [role="option"],
+  .mfe-root [data-slot="sidebar-menu-button"],
+  .mfe-root [data-slot="dropdown-menu-trigger"],
+  .mfe-root [data-slot="dropdown-menu-item"] {
+    cursor: pointer;
+  }
+
+  .mfe-root img,
+  .mfe-root svg,
+  .mfe-root video {
+    display: block;
+    max-width: 100%;
+  }
+
+  .mfe-root h1, .mfe-root h2, .mfe-root h3,
+  .mfe-root h4, .mfe-root h5, .mfe-root h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .mfe-root ol,
+  .mfe-root ul,
+  .mfe-root menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mfe-root p,
+  .mfe-root h1, .mfe-root h2, .mfe-root h3,
+  .mfe-root h4, .mfe-root h5, .mfe-root h6,
+  .mfe-root blockquote,
+  .mfe-root dl, .mfe-root dd,
+  .mfe-root figure,
+  .mfe-root fieldset,
+  .mfe-root legend,
+  .mfe-root pre {
+    margin: 0;
+  }
+
+  .mfe-root hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+
+  .mfe-root a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  .mfe-root button,
+  .mfe-root input,
+  .mfe-root optgroup,
+  .mfe-root select,
+  .mfe-root textarea {
+    font-family: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-size: 100%;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mfe-root table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    text-indent: 0;
+    border-color: inherit;
+  }
+}
+
+/* ===== SCOPED TYPOGRAPHY UTILITIES ===== */
+.mfe-root .text-page-title {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+}
+.mfe-root .text-section-title {
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+  font-weight: 600;
+}
+.mfe-root .text-label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+.mfe-root .text-value {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+}
+.mfe-root .text-nav-section {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ===== SCOPED SHADOW UTILITIES ===== */
+.mfe-root .shadow-soft-xs { box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03); }
+.mfe-root .shadow-soft-sm { box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04); }
+.mfe-root .shadow-soft { box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05); }
+.mfe-root .shadow-soft-md { box-shadow: 0 6px 30px rgba(0, 0, 0, 0.06); }
+.mfe-root .shadow-soft-lg { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.07); }
+.mfe-root .shadow-card {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02), 0 8px 16px rgba(0,0,0,0.01);
+}
+.mfe-root .shadow-card-hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06), 0 8px 16px rgba(0,0,0,0.04), 0 16px 32px rgba(0,0,0,0.02);
+}
+
+/* ===== ANIMATION KEYFRAMES (keyframes are global but unique names prevent collisions) ===== */
+@keyframes copa-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes copa-fade-in-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes copa-scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes copa-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MFE Preview</title>
+    <style>
+      /* Preflight — matches what the host app normally provides */
+      *, *::before, *::after { box-sizing: border-box; border-width: 0; border-style: solid; margin: 0; padding: 0; }
+      html { height: 100%; line-height: 1.5; -webkit-text-size-adjust: 100%; tab-size: 4; }
+      body { height: 100%; line-height: inherit; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+      h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+      a { color: inherit; text-decoration: inherit; }
+      ol, ul, menu { list-style: none; }
+      img, svg, video, canvas, audio, iframe, embed, object { display: block; max-width: 100%; }
+      button, input, optgroup, select, textarea { font: inherit; color: inherit; }
+      button { cursor: pointer; background: transparent; }
+      table { border-collapse: collapse; border-spacing: 0; text-indent: 0; border-color: inherit; }
+      hr { height: 0; color: inherit; border-top-width: 1px; }
+      p, blockquote, dl, dd, figure, fieldset, legend, pre { margin: 0; }
+
+      /* Preview-specific */
+      .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        font-size: 16px;
+        color: #666;
+      }
+      .error {
+        padding: 20px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        margin: 20px;
+      }
+      .error h2 { color: #dc2626; margin-top: 0; }
+      .error code {
+        background: #f5f5f5;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: monospace;
+      }
+      #mfe-container { width: 100%; min-height: 100vh; }
+    </style>
+  </head>
+  <body>
+    <div id="loading-indicator" class="loading">Loading MFE module...</div>
+    <div id="error-container" style="display: none;"></div>
+    <div id="mfe-container"></div>
+
+    <!-- SystemJS import map for shared dependencies -->
+    <script type="systemjs-importmap">
+    {
+      "imports": {
+        "react": "https://unpkg.com/react@18/umd/react.development.js",
+        "react-dom": "https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+      }
+    }
+    </script>
+
+    <!-- SystemJS for loading System format modules -->
+    <script src="https://unpkg.com/systemjs@6/dist/system.min.js"></script>
+
+    <script>
+      // Using regular script (not module) so it runs synchronously after SystemJS loads
+      const MODULE_URL = "http://localhost:3001/assets/remoteEntry.js";
+      const BASE_PATH = "/";
+
+      let currentModule = null;
+
+      function loadRemoteEntry(url) {
+        return new Promise(function(resolve, reject) {
+          const existing = document.querySelector("script[src='" + url + "']");
+          if (existing) existing.remove();
+          const script = document.createElement('script');
+          script.src = url;
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = function() { reject(new Error('Failed to load remoteEntry.js')); };
+          document.head.appendChild(script);
+        });
+      }
+
+      async function loadModule() {
+        const loading = document.getElementById('loading-indicator');
+        const errorEl = document.getElementById('error-container');
+        const container = document.getElementById('mfe-container');
+
+        loading.style.display = 'flex';
+        errorEl.style.display = 'none';
+        container.innerHTML = '';
+
+        try {
+          // Load remoteEntry.js as a script tag first
+          await loadRemoteEntry(MODULE_URL);
+
+          // Clear System cache for fresh load
+          if (window.System && typeof window.System.delete === 'function') {
+            window.System.delete(MODULE_URL);
+          }
+
+          // Import the federation container via SystemJS
+          const fedContainer = await Promise.race([
+            System.import(MODULE_URL),
+            new Promise(function(_, reject) {
+              setTimeout(function() { reject(new Error('Module load timeout (15s)')); }, 15000);
+            })
+          ]);
+
+          // Get the exposed ./App module
+          let appModule;
+          if (typeof fedContainer.get === 'function') {
+            // Initialize the federation container shared scope
+            if (typeof fedContainer.init === 'function') {
+              try { await fedContainer.init({}); } catch (e) { /* already initialized */ }
+            }
+            const factory = await fedContainer.get('./App');
+            appModule = factory();
+          } else {
+            appModule = fedContainer;
+          }
+
+          // Find mount function — single-spa.tsx exports { mount, unmount, bootstrap }
+          const mountFn = (appModule && appModule.default && appModule.default.mount) || (appModule && appModule.mount);
+          const unmountFn = (appModule && appModule.default && appModule.default.unmount) || (appModule && appModule.unmount);
+
+          if (typeof mountFn !== 'function') {
+            throw new Error('No mount function found in module exports');
+          }
+
+          // Create mount point
+          const mountPoint = document.createElement('div');
+          mountPoint.id = 'single-spa-application:mfe-preview';
+          mountPoint.style.cssText = 'width: 100%; min-height: 100vh;';
+          container.appendChild(mountPoint);
+
+          // Mount with standard MFE props
+          await mountFn({
+            domElement: mountPoint,
+            basename: BASE_PATH,
+          });
+
+          currentModule = { unmountFn: unmountFn, mountPoint: mountPoint };
+          loading.style.display = 'none';
+          console.log('MFE mounted successfully');
+
+        } catch (error) {
+          loading.style.display = 'none';
+          errorEl.style.display = 'block';
+          errorEl.innerHTML =
+            '<div class="error">' +
+              '<h2>Failed to Load MFE</h2>' +
+              '<p>' + error.message + '</p>' +
+              '<ul>' +
+                '<li>Build the MFE first: <code>pnpm build</code></li>' +
+                '<li>Start the preview server: <code>pnpm start</code></li>' +
+                '<li>Verify <code>' + MODULE_URL + '</code> is accessible</li>' +
+                '<li>Check browser DevTools for details</li>' +
+              '</ul>' +
+            '</div>';
+          console.error('MFE preview error:', error);
+        }
+      }
+
+      window.reloadModule = async function() {
+        if (currentModule && currentModule.unmountFn) {
+          try { await currentModule.unmountFn(); } catch (e) { console.warn('Unmount failed:', e); }
+        }
+        currentModule = null;
+        if (window.System && window.System.clear) window.System.clear();
+        setTimeout(loadModule, 100);
+      };
+
+      // Wait for DOM + SystemJS to be ready, then load
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          if (window.System) {
+            var importMap = document.querySelector('script[type="systemjs-importmap"]');
+            if (importMap) {
+              window.System.addImportMap(JSON.parse(importMap.textContent));
+            }
+            loadModule();
+          }
+        });
+      } else {
+        // DOM already ready
+        if (window.System) {
+          var importMap = document.querySelector('script[type="systemjs-importmap"]');
+          if (importMap) {
+            window.System.addImportMap(JSON.parse(importMap.textContent));
+          }
+          loadModule();
+        }
+      }
+    </script>
+  </body>
+</html>

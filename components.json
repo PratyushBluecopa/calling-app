@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "app/app.css",
+    "baseColor": "gray",
+    "cssVariables": true,
+    "prefix": "copa"
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "~/components",
+    "utils": "~/utils/utils",
+    "ui": "~/components/ui",
+    "lib": "~/utils",
+    "hooks": "~/hooks"
+  },
+  "registries": {
+    "@bluecopa-ui": "https://blui.vercel.app/r/{name}.json"
+  }
+}

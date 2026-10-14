@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bluecopa - AI-powered Finance Automation</title>
+    <meta name="description" content="AI-powered close automation for modern finance teams. Streamline your order-to-cash, procure-to-pay, and record-to-report processes." />
+    <style>
+      /*
+       * Standalone preflight — replaces Tailwind's preflight for dev mode.
+       * This file is NOT used in MFE mode (host provides its own resets).
+       */
+      *, *::before, *::after { box-sizing: border-box; border-width: 0; border-style: solid; margin: 0; padding: 0; }
+      html { height: 100%; line-height: 1.5; -webkit-text-size-adjust: 100%; tab-size: 4; }
+      body { height: 100%; line-height: inherit; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+      #root { height: 100%; }
+      h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+      a { color: inherit; text-decoration: inherit; }
+      ol, ul, menu { list-style: none; }
+      img, svg, video, canvas, audio, iframe, embed, object { display: block; max-width: 100%; }
+      button, input, optgroup, select, textarea { font: inherit; color: inherit; }
+      button { cursor: pointer; background: transparent; }
+      table { border-collapse: collapse; border-spacing: 0; text-indent: 0; border-color: inherit; }
+      hr { height: 0; color: inherit; border-top-width: 1px; }
+      p, blockquote, dl, dd, figure, fieldset, legend, pre { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Inline loader: visible instantly before JS/CSS loads, replaced when React mounts -->
+      <div id="initial-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;width:100%;background:#f8f8fa;font-family:'Satoshi',system-ui,sans-serif;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+          <div style="width:40px;height:40px;border:3px solid #e5e7eb;border-top-color:#3548ff;border-radius:50%;animation:init-spin 0.7s linear infinite;"></div>
+          <span style="color:#6b7280;font-size:0.835rem;">Loading...</span>
+        </div>
+      </div>
+      <style>@keyframes init-spin{to{transform:rotate(360deg)}}</style>
+    </div>
+    <script type="module" src="/app/main.tsx"></script>
+  </body>
+</html>
